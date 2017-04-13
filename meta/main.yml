@@ -1,6 +1,6 @@
 galaxy_info:
-  author: your name
-  description: your description
+  author: Haruyoshi Chiyoda
+  description: Ansible role for installing stns env.
   company: your company (optional)
 
   # If the issue tracker for your role is not on github, uncomment the
@@ -162,6 +162,13 @@ galaxy_info:
   #  - 5
   #  - 6
   #  - 7
+  - name: CentOS
+    versions:
+  #  - all
+  #  - 5
+  #  - 6
+    - 7
+  #- name: Windows
   #- name: Windows
   #  versions:
   #  - all
@@ -207,7 +214,7 @@ galaxy_info:
   #  - all
   #  - Any
 
-  galaxy_tags: []
+  galaxy_tags: [stns]
     # List tags for your role here, one per line. A tag is
     # a keyword that describes and categorizes the role.
     # Users find roles by searching for tags. Be sure to
