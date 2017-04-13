@@ -1,0 +1,11 @@
+---
+# tasks file for stns
+- include:  stns.yml
+  tags:
+    - setup-server
+- include:  stns-client.yml
+  tags:
+    - setup-client
+- include: stns_update_user_list.yml
+  tags:
+    - update_user_list

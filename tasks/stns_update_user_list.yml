@@ -1,0 +1,18 @@
+---
+# tasks file for stns
+- name: create conf.d dirs if it doesn't exist
+  file:
+    path: /etc/stns/conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: replace stns_user_01.conf
+  template:
+    src: templates/stns_user_01.conf.j2
+    dest: /etc/stns/conf.d/stns_user_01.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: reload stns

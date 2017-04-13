@@ -1,0 +1,9 @@
+---
+# vars file for stns
+
+stns_user_01_lists:
+    - { name: 'user1', id: '1234' }
+    - { name: 'user2', id: '1235' }
+    - { name: 'user3', id: '1236' }
+    - { name: 'user4', id: '1237' }
+    - { name: 'user5', id: '1238' }

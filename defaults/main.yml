@@ -1,0 +1,7 @@
+---
+# defaults file for stns
+stns_port: 1104
+stns_include: "/etc/stns/conf.d/*"
+stns_user: "basic_user"
+stns_password: "basic_password"
+stns_api_end_point: "http://localhost:1104/v3"

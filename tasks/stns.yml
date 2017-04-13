@@ -1,0 +1,28 @@
+---
+# tasks file for stns
+- name: Add STNS repo
+  yum_repository:
+    name: stns
+    description: STNS YUM repo
+    baseurl: http://repo.stns.jp/centos/$basearch
+    gpgkey: https://repo.stns.jp/gpg/GPG-KEY-stns
+    gpgcheck: yes
+
+- name: Install STNS server and client
+  yum:
+   name={{ item }}
+   state=latest
+  with_items:
+   - stns
+   - libnss-stns
+   - libpam-stns
+   - nscd
+
+- name: replace stns.conf
+  template:
+    src: templates/stns.conf.j2
+    dest: /etc/stns/stns.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: reload stns

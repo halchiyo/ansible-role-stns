@@ -1,0 +1,39 @@
+---
+# tasks file for stns
+- name: Add STNS repo
+  yum_repository:
+    name: stns
+    description: STNS YUM repo
+    baseurl: http://repo.stns.jp/centos/$basearch
+    gpgkey: https://repo.stns.jp/gpg/GPG-KEY-stns
+    gpgcheck: yes
+
+- name: Install STNS client
+  yum:
+   name={{ item }}
+   state=latest
+  with_items:
+   - libnss-stns
+   - libpam-stns
+   - nscd
+
+- name: replace libnss_stns.conf
+  template:
+    src: templates/libnss_stns.conf.j2
+    dest: /etc/stns/libnss_stns.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: check /etc/pam.d/sshd
+  shell: grep "session\s*required\s*pam_mkhomedir.so" /etc/pam.d/sshd
+  register: check_pam_mkhomedir
+  failed_when: check_pam_mkhomedir.rc not in [0, 1]
+
+- name: insert/update "pam_mkhomedir.so" configuration block in  /etc/pam.d/sshd
+  blockinfile:
+    dest: /etc/pam.d/sshd
+    block: |
+       Automatically create a HOME directory when logg in via SSH for the first time.
+       session    required     pam_mkhomedir.so skel=/etc/skel/ umask=0022
+

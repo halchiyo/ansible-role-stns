@@ -1,0 +1,15 @@
+{% for stns_user in stns_user_01_lists %}
+##### for {{stns_user.name}} #####
+[users.{{stns_user.name}}]
+id = {{stns_user.id}}
+group_id = {{stns_user.id}}
+directory = "/home/{{ stns_user.name }}"
+shell = "/bin/bash"
+keys = ["{% include "files/pubkeys/" + stns_user.name + ".pub" %}"]
+
+[groups.{{stns_user.name}}]
+id = {{stns_user.id}}
+users = ["{{stns_user.name}}"]
+
+{% endfor %}
+
