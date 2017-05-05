@@ -1,1 +1,19 @@
-localhost
+[stg:children]
+stg-stns-server
+stg-stns-client
+
+[prod:children]
+prd-stns-server
+prd-stns-client
+
+[stg-stns-server]
+localhost ansible_connection=local
+
+[stg-stns-client]
+localhost ansible_connection=local
+
+[prd-stns-server]
+localhost ansible_connection=local
+
+[prd-stns-client]
+localhost ansible_connection=local

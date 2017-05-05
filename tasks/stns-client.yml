@@ -11,11 +11,11 @@
 - name: Install STNS client
   yum:
    name={{ item }}
-   state=latest
+   state=present
   with_items:
    - libnss-stns
    - libpam-stns
-   - nscd
+#   - nscd
 
 - name: replace libnss_stns.conf
   template:
@@ -27,13 +27,114 @@
 
 - name: check /etc/pam.d/sshd
   shell: grep "session\s*required\s*pam_mkhomedir.so" /etc/pam.d/sshd
-  register: check_pam_mkhomedir
-  failed_when: check_pam_mkhomedir.rc not in [0, 1]
+  register: check_pam_sshd_mkhomedir
+  failed_when: check_pam_sshd_mkhomedir.rc not in [0, 1]
 
-- name: insert/update "pam_mkhomedir.so" configuration block in  /etc/pam.d/sshd
-  blockinfile:
-    dest: /etc/pam.d/sshd
-    block: |
-       Automatically create a HOME directory when logg in via SSH for the first time.
-       session    required     pam_mkhomedir.so skel=/etc/skel/ umask=0022
+- name: insert "pam_mkhomedir.so" configuration in  /etc/pam.d/sshd
+  pamd:
+    name: sshd
+    type: session
+    control: optional
+    module_path: pam_keyinit.so
+    new_type: session
+    new_control: required
+    new_module_path: pam_mkhomedir.so
+    module_arguments: 'skel=/etc/skel/ umask=0022'
+    state: before
+  when: check_pam_sshd_mkhomedir.rc  == 1
 
+- name: check stns for "passwd" in /etc/nsswitch.conf
+  command: /bin/grep -i "^passwd\:.*stns" /etc/nsswitch.conf
+  register: check_nsswitch_passwd
+  failed_when: check_nsswitch_passwd.rc not in [0, 1]
+
+- name: get current name services for "passwd" in /etc/nsswitch.conf
+  command: /bin/grep "^passwd\:" /etc/nsswitch.conf
+  register: get_nsswitch_passwd
+  failed_when: get_nsswitch_passwd.rc not in [0, 1]
+  when: check_nsswitch_passwd.rc == 1
+
+- name: add stns for "passwd" in /etc/nsswitch.conf
+  lineinfile:
+    dest: /etc/nsswitch.conf
+    regexp: '^passwd\:'
+    line: "{{get_nsswitch_passwd.stdout}} stns"
+  when: check_nsswitch_passwd.rc == 1
+
+- name: check stns for "shadow" in /etc/nsswitch.conf
+  command: /bin/grep -i "^shadow\:.*stns" /etc/nsswitch.conf
+  register: check_nsswitch_shadow
+  failed_when: check_nsswitch_shadow.rc not in [0, 1]
+
+- name: get current name services for "shadow" in /etc/nsswitch.conf
+  command: /bin/grep "^shadow\:" /etc/nsswitch.conf
+  register: get_nsswitch_shadow
+  failed_when: get_nsswitch_shadow.rc not in [0, 1]
+  when: check_nsswitch_shadow.rc == 1
+
+- name: add stns for "shadow" in /etc/nsswitch.conf
+  lineinfile:
+    dest: /etc/nsswitch.conf
+    regexp: '^shadow\:'
+    line: "{{get_nsswitch_shadow.stdout}} stns"
+  when: check_nsswitch_shadow.rc == 1
+
+- name: check stns for "group" in /etc/nsswitch.conf
+  command: /bin/grep -i "^group\:.*stns" /etc/nsswitch.conf
+  register: check_nsswitch_group
+  failed_when: check_nsswitch_group.rc not in [0, 1]
+
+- name: get current name services for "group" in /etc/nsswitch.conf
+  command: /bin/grep "^group\:" /etc/nsswitch.conf
+  register: get_nsswitch_group
+  failed_when: get_nsswitch_group.rc not in [0, 1]
+  when: check_nsswitch_group.rc == 1
+
+- name: add stns for "group" in /etc/nsswitch.conf
+  lineinfile:
+    dest: /etc/nsswitch.conf
+    regexp: '^group\:'
+    line: "{{get_nsswitch_group.stdout}} stns"
+  when: check_nsswitch_group.rc == 1
+
+- name: check AuthorizedKeysCommand in /etc/ssh/sshd_config
+  shell: grep "^AuthorizedKeysCommand .*stns-key-wrapper" /etc/ssh/sshd_config
+  register: check_AuthorizedKeysCommand_entry
+  failed_when: check_AuthorizedKeysCommand_entry.rc not in [0, 1]
+
+- name: check AuthorizedKeysCommandUser in /etc/ssh/sshd_config
+  shell: grep "^AuthorizedKeysCommandUser .*root" /etc/ssh/sshd_config
+  register: check_AuthorizedKeysCommandUser_entry
+  failed_when: check_AuthorizedKeysCommandUser_entry.rc not in [0, 1]
+
+- name: add AuthorizedKeysCommand in /etc/ssh/sshd_config (CentOS7)
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^#AuthorizedKeysCommand '
+    line: AuthorizedKeysCommand /usr/local/bin/stns-key-wrapper
+  notify: systemctl restart sshd
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7" and check_AuthorizedKeysCommand_entry.rc == 1
+
+- name: add AuthorizedKeysCommandUser in /etc/ssh/sshd_config (CentOS7)
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^#AuthorizedKeysCommandUser '
+    line: AuthorizedKeysCommandUser root
+  notify: systemctl restart sshd
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7" and check_AuthorizedKeysCommandUser_entry.rc == 1
+
+- name: add AuthorizedKeysCommand in /etc/ssh/sshd_config (CentOS6)
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^#AuthorizedKeysCommand '
+    line: AuthorizedKeysCommand /usr/lib/stns/stns-key-wrapper
+  notify: restart sshd
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "6" and check_AuthorizedKeysCommand_entry.rc == 1
+
+- name: add AuthorizedKeysCommandUser in /etc/ssh/sshd_config (CentOS6)
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^#AuthorizedKeysCommandRunAs '
+    line: AuthorizedKeysCommandRunAs root
+  notify: restart sshd
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "6" and check_AuthorizedKeysCommandUser.rc == 1

@@ -2,4 +2,16 @@
 # handlers file for stns
 
 - name: reload stns
-  service: name=stns state=reloaded
+  service:
+    name=stns
+    state=reloaded
+
+- name: restart sshd
+  service:
+    name=sshd
+    state=restarted
+
+- name: systemctl restart sshd
+  systemd:
+    name=sshd
+    state=restarted
